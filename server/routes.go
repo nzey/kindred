@@ -199,7 +199,7 @@ func visitHandler(conn *redis.Client) http.Handler {
 			w.Header().Set("Content-Type", "application/json")
 			j, _ := json.Marshal(res)
 			w.Write(j)
-		} 
+		}
 	})
 }
 
@@ -253,8 +253,8 @@ func profileHandler(db *gorm.DB, conn *redis.Client) http.Handler {
 				if err != nil {
 					panic(err)
 				}
-				
-				conn.Cmd("HMSET", un.Username, "Profile", string(out), "Survey", "true	")
+
+				conn.Cmd("HMSET", un.Username, "Profile", string(out), "Survey", "true")
 
 				//write response back
 				w.Header().Set("Content-Type", "application/json")
