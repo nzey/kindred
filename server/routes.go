@@ -562,11 +562,6 @@ func roomHandler(p *pool.Pool) http.Handler {
 	})
 }
 
-type UserAnswer struct {
-	Question string
-	Answer   string
-}
-
 //----- QUESTION OF THE DAY -----//
 
 func qotdHandler(db *gorm.DB, p *pool.Pool, qotdCounter *int) http.Handler {
@@ -577,10 +572,11 @@ func qotdHandler(db *gorm.DB, p *pool.Pool, qotdCounter *int) http.Handler {
 			panic(err)
 		}
 
-		param := req.URL.Query().Get("user")
 		if req.Method == http.MethodGet {
-			// if query string specifies a user
-			// api/qotd?user=555
+			param := req.URL.Query().Get("user")
+
+			// if query string specifies a user id (e.g. api/qotd?user=555)
+			// respond with 10 of that user's qotd answers
 			if param != "" {
 				var allUserAnswers []QotdAnswer
 				userAnswers := make([]UserAnswer, 10)
@@ -605,27 +601,10 @@ func qotdHandler(db *gorm.DB, p *pool.Pool, qotdCounter *int) http.Handler {
 				}
 				w.Header().Set("Content-Type", "application/json")
 				w.Write(q)
-			} else if req.URL.Query().Get("q") == "data" {
-				// if query string requests the data from the last 10 QOTDs, for data map etc
-				// api/qotd?q=data
-				type QotdData struct {
-					QotdID       int
-					QotdType     string
-					QotdCategory string
-					QotdText     string
-					UserAuthID   int
-					AnswerText   string
-					Zip          int
-					Age          int
-					Gender       int
-					Income       int
-					Education    int
-					Religiousity int
-					Ethnicity    int
-					State        string
-					Party        int
-				}
 
+				// if query string specifies data (i.e. api/qotd?q=data),
+				// respond with all user answers from the last 10 QOTDs
+			} else if req.URL.Query().Get("q") == "data" {
 				var qotdData []QotdData
 
 				db.Raw("SELECT qotds.id as qotd_id, qotds.question_type AS qotd_type, qotds.category AS qotd_category, qotds.text AS qotd_text, qotd_answers.user_auth_id, qotd_answers.text AS answer_text, user_profiles.zip, user_profiles.age, user_profiles.gender, user_profiles.income, user_profiles.education, user_profiles.religiousity, user_profiles.religion, user_profiles.ethnicity, user_profiles.state, user_profiles.party FROM qotds, qotd_answer_options, qotd_answers, user_profiles WHERE qotds.id = qotd_answer_options.qotd_id AND qotds.id = qotd_answers.qotd_id AND qotd_answer_options.text = qotd_answers.text AND qotd_answers.user_auth_id = user_profiles.user_auth_id AND qotds.id <=? AND qotds.id >=?", qotdCounter, *qotdCounter-9).Scan(&qotdData)
@@ -634,18 +613,14 @@ func qotdHandler(db *gorm.DB, p *pool.Pool, qotdCounter *int) http.Handler {
 				if err != nil {
 					panic(err)
 				}
+
 				w.Header().Set("Content-Type", "application/json")
 				w.Write(data)
+
+				// if query string specifies dataoptions (i.e. api/qotd?q=dataoptions),
+				// respond with answer options for last 10 qotds
 			} else if req.URL.Query().Get("q") == "dataoptions" {
-				// get answer options for qotd data for map
-				// api/qotd?q=dataoptions
-				type QotdAnswers struct {
-					QotdID     int
-					QotdText   string
-					AnswerText string
-				}
 				var qotdAnswerOptions []QotdAnswers
-				// db.Raw("SELECT * FROM qotd_answer_options WHERE qotd_id <=? AND qotd_id >= ?", qotdCounter, *qotdCounter-9).Scan(&qotdAnswerOptions)
 
 				db.Raw("SELECT qotds.text AS qotd_text, qotds.ID AS qotd_id, qotd_answer_options.text AS answer_text FROM qotds, qotd_answer_options WHERE qotds.id = qotd_answer_options.qotd_id AND qotd_id <=? AND qotd_id >=?", qotdCounter, *qotdCounter-9).Scan(&qotdAnswerOptions)
 
@@ -653,18 +628,13 @@ func qotdHandler(db *gorm.DB, p *pool.Pool, qotdCounter *int) http.Handler {
 				if err != nil {
 					panic(err)
 				}
+
 				w.Header().Set("Content-Type", "application/json")
 				w.Write(data)
+
+				// if query string specifies qotd (i.e. api/qotd?q=qotd),
+				// respond with today's qotd
 			} else if req.URL.Query().Get("q") == "qotd" {
-				// if query string requests the current qotd
-				// api/qotd?q=qotd
-				type QuestionWOptions struct {
-					ID       string
-					Qtype    string
-					Category string
-					Text     string
-					Options  []string
-				}
 				var qotdWOptions QuestionWOptions
 				qotd, err := conn.Cmd("HGETALL", "qotd").Map()
 				options, err := conn.Cmd("HGETALL", "options").List()
@@ -682,8 +652,9 @@ func qotdHandler(db *gorm.DB, p *pool.Pool, qotdCounter *int) http.Handler {
 				w.Header().Set("Content-Type", "application/json")
 				w.Write(data)
 			}
+
+			// if POST request, add user's qotd answer to db
 		} else {
-			// post user qotd answer to db
 			var newAnswer QotdAnswer
 			var oldAnswer QotdAnswer
 			var user UserAuth
