@@ -349,7 +349,6 @@ func profileHandler(db *gorm.DB, p *pool.Pool) http.Handler {
 func feedbackHandler(db *gorm.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodGet {
-			fmt.Println("get feedback route")
 			var randQuestion FeedbackQuestion
 			var questionCount int
 			db.Table("feedback_questions").Count(&questionCount)
@@ -444,30 +443,8 @@ func queueHandler(p *pool.Pool) http.Handler {
 				w.Header().Set("Content-Type", "application/json")
 				w.Write(j)
 			}
-			// if err != nil {
-			// 	panic(err)
-			// }
-
-			// var s string
-			// ql, err := conn.Cmd("LLEN", "queue").Int()
-			// qr, err := conn.Cmd("L`RA`NGE", "queue", 0, ql).Array()
-			// if err != nil {
-			// 	panic(err)
-			// }
-
-			// for _, v := range qr {
-			// 	tempS, _ := v.Str()
-			// 	s += tempS + " "
-			// }
-
-			// j, err := json.Marshal(s)
-			// if err != nil {
-			// 	panic(err)
-			// }
-
-			// w.Header().Set("Content-Type", "application/json")
-			// w.Write(j)
 		}
+
 		if req.Method == http.MethodPost {
 			var p UserQueue
 			decoder := json.NewDecoder(req.Body)
@@ -584,64 +561,6 @@ func roomHandler(p *pool.Pool) http.Handler {
 		}
 	})
 }
-
-//----- MESSAGING -----//
-
-// func wsHandler(p *pool.Pool) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		conn, err := p.Get()
-// 		defer p.Put(conn)
-// 		if err != nil {
-// 			panic(err)
-// 		}
-
-// 		//upgrades get request to a websocket connection
-
-// 		conn, err = upgrader.Upgrade(w, r, nil)
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-
-// 		// defer conn.Close()
-
-// 		clients[conn] = true
-
-// 		for {
-// 			var msg Message
-
-// 			err := conn.ReadJSON(&msg)
-
-// 			if err != nil {
-// 				fmt.Println(err)
-// 				delete(clients, conn)
-// 				break
-// 			}
-
-// 			broadcast <- msg
-// 		}
-// 	})
-// }
-
-// func wsMessages() {
-// 	for {
-// 		msg := <-broadcast
-
-// 		for client := range clients {
-// 			err := client.WriteJSON(msg)
-// 			if err != nil {
-// 				fmt.Println(err)
-// 				client.Close()
-// 				delete(clients, client)
-// 			}
-// 		}
-// 	}
-// }
-
-// Other potential 'feedback' routes:
-// get all feedback questions
-// get all feedback answers to a particular question
-// get all feedback answers to a particular question on particular day
-// post feedback questions
 
 type UserAnswer struct {
 	Question string
