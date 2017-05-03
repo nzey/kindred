@@ -68,49 +68,78 @@ class DataMap extends React.Component {
     setTimeout(this.sizeChange, 100);
     this.renderMap = this.renderMap.bind(this);
     this.showHoverInfo = this.showHoverInfo.bind(this);
-    this.moveElementWithMouse = this.moveElementWithMouse.bind(this);
-    this.hideElement = this.hideElement.bind(this);
-    this.attachHoverBox = this.attachHoverBox.bind(this);
   }
 
-  mergeTopoWithStateData(nextprops) {
-    let question = nextprops.questionChoice ? nextprops.questionChoice : nextprops.stateData ? Object.keys(nextprops.stateData)[0] : '';
-    if (nextprops.stateData) {
-      let stateData = nextprops.stateData;
-      let mergeData = nextprops.topoData;
-      mergeData.objects.usStates.geometries.forEach((topoState, i) => {
+  /* ---- Merge question-of-the-day data with dataless topoJson object ---- */
+
+  mergeTopoWithSelectedStateData(selectedTopic, allStateData, topoData) {
+    let selection = selectedTopic ? selectedTopic : allStateData ? Object.keys(allStateData)[0] : '';
+    if (allStateData) {
+      topoData.objects.usStates.geometries.forEach((topoState, i) => {
         let state = topoState.properties.STATE_ABBR;
-        mergeData.objects.usStates.geometries[i].properties.data = stateData[question][state];
+        topoData.objects.usStates.geometries[i].properties.data = allStateData[selection][state];
       });
-      this.setState({mergeData: mergeData});
+      this.setState({mergeData: topoData});
     }
   }
 
   componentWillReceiveProps(nextprops) {
-    this.mergeTopoWithStateData(nextprops);
+    this.mergeTopoWithSelectedStateData(nextprops.questionChoice, nextprops.stateData, nextprops.topoData);
   }
+  
+  /* ----------------------- Make map size responsive --------------------- */
 
   sizeChange() {
-    d3.select("g")
-      .attr("transform", "scale(" + $("#mapcontainer").width()/900 + ")");
-    $("svg").height($("#mapcontainer").width() * 0.618);
+    d3.select('g')
+      .attr('transform', 'scale(' + $('#mapcontainer').width() / 900 + ')');
+    $('svg').height($('#mapcontainer').width() * 0.618);
   }
 
   componentDidMount() {
     d3.select(window).on('resize', this.sizeChange);
   }
 
-  componentWillReceiveProps(nextprops) {
-    this.mergeTopoWithStateData(nextprops);
+
+  /* ------------------- Build map with data-full topoJson --------------- */
+
+  renderMap(topoData) {
+    var datamapContainer = Faux.createElement('div');   
+      
+    d3.select(datamapContainer)
+      .attr('id', 'mapcontainer');
+
+    var svg = d3.select(datamapContainer).append('svg')
+      .attr('width', '100%')
+        .append('g')
+        .classed('no-mouse', true);
+    
+    var projection = d3.geoAlbersUsa()
+      .scale(900);
+    
+    var path = d3.geoPath()
+      .projection(projection);
+
+    const stateSvgs = svg.selectAll('.states')
+      .data(topoData)
+      .enter()
+      .append('path')
+      .attr('class', 'states')
+      .attr('d', path);
+
+    return datamapContainer;
   }
 
-
-  /* ---------------- Helpers for renderMap ------------------- */
+  /* ------------------------ Build Hovering Info Box --------------------- */
   
+  attachHoverBox(domElement) {
+    return d3.select(domElement)
+      .append('div')
+      .attr('id', 'hoverinfo')
+      .classed('hide', true);
+  }
+
   showHoverInfo(hoverinfoBox, d) {
-    var name = this.state.stateAbbr[d.properties.STATE_ABBR];
-    var data = {total: d.properties.data.total};
-    let total = d.properties.data.total;   
+    var name = this.state.stateAbbr[d.properties.STATE_ABBR];  
     let text = `Total: ${d.properties.data.total}<br>`;     
     for (let answer in d.properties.data.answers) {
       text += `${answer}: ${d.properties.data.answers[answer]}<br>`;
@@ -122,8 +151,8 @@ class DataMap extends React.Component {
 
   moveElementWithMouse(element) {
     d3.select(element)
-      .style("top", (d3.event.pageY-10)+"px")
-      .style("left", (d3.event.pageX+10)+"px");
+      .style('top', (d3.event.pageY - 10) + 'px')
+      .style('left', (d3.event.pageX + 10) + 'px');
   }
 
   hideElement(element) {
@@ -131,11 +160,11 @@ class DataMap extends React.Component {
       .classed('hide', true);
   }
   
-  attachHoverBox(hoverInfoElement, statesElements) {
+  populateHoverBox(hoverInfoElement, statesElements) {
     statesElements.on('mouseover', (d) => {
       this.showHoverInfo(hoverinfo, d);
     })
-    .on("mousemove", () => {
+    .on('mousemove', () => {
       this.moveElementWithMouse(hoverinfo);
     })
     .on('mouseout', () => {
@@ -143,44 +172,19 @@ class DataMap extends React.Component {
     });
   }
 
-  /* ----------------------------------- */
-
-  renderMap() {
-    var datamapContainer = Faux.createElement('div');   
-      
-    d3.select(datamapContainer)
-      .attr('id', "mapcontainer")
-
-    var hoverBox = d3.select(datamapContainer)
-      .append('div')
-      .attr('id', 'hoverinfo')
-      .classed('hide', true);
-    
-    var svg = d3.select(datamapContainer).append('svg')
-      .attr("width", "100%")
-        .append("g")
-        .classed('no-mouse', true);
-    
-    var projection = d3.geoAlbersUsa()
-      .scale(900);
-    
-    var path = d3.geoPath()
-      .projection(projection);
-
-    const stateSvgs = svg.selectAll('.states')
-      .data(topojson.feature(this.state.mergeData, this.state.mergeData.objects.usStates).features)
-      .enter()
-      .append('path')
-      .attr('class', 'states')
-      .attr('d', path);
-
-    this.attachHoverBox(hoverBox, stateSvgs);
-
-    return datamapContainer.toReact();
-  }
+  /* ---------------------------------------------------------------------- */
 
   render() {
-    return this.state.mergeData ? this.renderMap() : null;
+    if (this.state.mergeData) {
+      let topoData = topojson.feature(this.state.mergeData, this.state.mergeData.objects.usStates).features;
+      let datafullMap = this.renderMap(topoData);
+      let hoverBox = this.attachHoverBox(datafullMap);
+      let dataElements = d3.select(datafullMap).selectAll('.states')
+      this.populateHoverBox(hoverBox, dataElements);
+      return datafullMap.toReact();
+    } else {
+      return null;
+    }
   }
 }
 
