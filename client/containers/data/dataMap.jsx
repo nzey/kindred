@@ -66,6 +66,11 @@ class DataMap extends React.Component {
       }
     };
     setTimeout(this.sizeChange, 100);
+    this.renderMap = this.renderMap.bind(this);
+    this.showHoverInfo = this.showHoverInfo.bind(this);
+    this.moveElementWithMouse = this.moveElementWithMouse.bind(this);
+    this.hideElement = this.hideElement.bind(this);
+    this.attachHoverBox = this.attachHoverBox.bind(this);
   }
 
   mergeTopoWithStateData(nextprops) {
@@ -99,63 +104,83 @@ class DataMap extends React.Component {
     this.mergeTopoWithStateData(nextprops);
   }
 
-  render() {
-    if (this.state.mergeData) {
-      var datamapContainer = Faux.createElement('div');   
-      
-      d3.select(datamapContainer)
-        .attr('id', "mapcontainer")
 
-      var hoverInfo = d3.select(datamapContainer)
-        .append('div')
-        .attr('id', 'hoverinfo')
-        .classed('hide', true);
-      
-      var svg = d3.select(datamapContainer).append('svg')
-        .attr("width", "100%")
-          .append("g")
-          .classed('no-mouse', true);
-      
-      var projection = d3.geoAlbersUsa()
-        .scale(900);
-      
-      var path = d3.geoPath()
-        .projection(projection);
-
-      svg.selectAll('.states')
-        .data(topojson.feature(this.state.mergeData, this.state.mergeData.objects.usStates).features)
-        .enter()
-        .append('path')
-        .style('fill', '#b5c0fb')
-        .style('stroke', 'white')
-        .style('stroke-width', '2px')
-        .attr('class', 'states')
-        .attr('d', path)
-        .on('mouseover', (d) => {
-          var name = this.state.stateAbbr[d.properties.STATE_ABBR];
-          var data = {total: d.properties.data.total};
-          let total = d.properties.data.total;   
-          let text = `Total: ${d.properties.data.total}<br>`;     
-          for (let answer in d.properties.data.answers) {
-            text += `${answer}: ${d.properties.data.answers[answer]}<br>`;
-          }
-          return d3.select(hoverinfo)
-            .classed('hide', false)
-            .html(`<strong>${name}</strong><br/>${text}`);
-        })
-        .on("mousemove", () => {
-          d3.select(hoverinfo)
-            .style("top", (d3.event.pageY-10)+"px")
-            .style("left",(d3.event.pageX+10)+"px");
-        })
-        .on('mouseout', () => {
-          d3.select(hoverinfo)
-            .classed('hide', true);
-        });
-      return datamapContainer.toReact();
-    } else {
-      return null;
+  /* ---------------- Helpers for renderMap ------------------- */
+  
+  showHoverInfo(hoverinfoBox, d) {
+    var name = this.state.stateAbbr[d.properties.STATE_ABBR];
+    var data = {total: d.properties.data.total};
+    let total = d.properties.data.total;   
+    let text = `Total: ${d.properties.data.total}<br>`;     
+    for (let answer in d.properties.data.answers) {
+      text += `${answer}: ${d.properties.data.answers[answer]}<br>`;
     }
+    return d3.select(hoverinfoBox)
+      .classed('hide', false)
+      .html(`<strong>${name}</strong><br/>${text}`);
+  }
+
+  moveElementWithMouse(element) {
+    d3.select(element)
+      .style("top", (d3.event.pageY-10)+"px")
+      .style("left", (d3.event.pageX+10)+"px");
+  }
+
+  hideElement(element) {
+    d3.select(element)
+      .classed('hide', true);
+  }
+  
+  attachHoverBox(hoverInfoElement, statesElements) {
+    statesElements.on('mouseover', (d) => {
+      this.showHoverInfo(hoverinfo, d);
+    })
+    .on("mousemove", () => {
+      this.moveElementWithMouse(hoverinfo);
+    })
+    .on('mouseout', () => {
+      this.hideElement(hoverinfo);
+    });
+  }
+
+  /* ----------------------------------- */
+
+  renderMap() {
+    var datamapContainer = Faux.createElement('div');   
+      
+    d3.select(datamapContainer)
+      .attr('id', "mapcontainer")
+
+    var hoverBox = d3.select(datamapContainer)
+      .append('div')
+      .attr('id', 'hoverinfo')
+      .classed('hide', true);
+    
+    var svg = d3.select(datamapContainer).append('svg')
+      .attr("width", "100%")
+        .append("g")
+        .classed('no-mouse', true);
+    
+    var projection = d3.geoAlbersUsa()
+      .scale(900);
+    
+    var path = d3.geoPath()
+      .projection(projection);
+
+    const stateSvgs = svg.selectAll('.states')
+      .data(topojson.feature(this.state.mergeData, this.state.mergeData.objects.usStates).features)
+      .enter()
+      .append('path')
+      .attr('class', 'states')
+      .attr('d', path);
+
+    this.attachHoverBox(hoverBox, stateSvgs);
+
+    return datamapContainer.toReact();
+  }
+
+  render() {
+    return this.state.mergeData ? this.renderMap() : null;
   }
 }
 

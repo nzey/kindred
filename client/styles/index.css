@@ -175,6 +175,12 @@ button.account-btn.edit:hover {
   align-self: center;
 }
 
+.states {
+  fill: #b5c0fb;
+  stroke: white;
+  stroke-width: 2px;
+}
+
 .states:hover {
   fill: #CFD6FC !important;
 }

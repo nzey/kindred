@@ -23,6 +23,7 @@ class DataView extends React.Component {
     this.state = {
       setFirst: true
     };
+    
     instance.goInstance.get('/api/qotd?q=data')
     .then((response) => {
       this.props.actionQotdData(response);
