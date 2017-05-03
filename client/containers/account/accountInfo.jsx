@@ -14,8 +14,8 @@ class AccountInfo extends React.Component {
     this.deleteAccountWarn = this.deleteAccountWarn.bind(this);
     this.deleteAccount = this.deleteAccount.bind(this);
     this.editAccount = this.editAccount.bind(this);  
+    this.showAccountOverview = this.showAccountOverview.bind(this);
   }
-
 
   deleteAccountWarn() {
     const key = `open${Date.now()}`;
@@ -50,16 +50,16 @@ class AccountInfo extends React.Component {
     this.props.actionSurveyFromAccountPage(true);
   }
 
-  render() {
-    const accountOverview = (
+  showAccountOverview() {
+    return (
       <div>
-      {this.props.userProfile ? this.props.userProfile.map((v) => {
+      {this.props.userProfile ? this.props.userProfile.map((v, i) => {
         if (v[0] !== 'Username') {
           return (
-            <div key={Math.random()} className="review-input-container">
-              <div key={Math.random()} className="review-input">
-                <div key={Math.random()} className="review-input-header">{v[0]}</div>
-                <div key={Math.random()} className="review-input-result">{v[1]}</div>
+            <div key={i + '.1'} className="review-input-container">
+              <div key={i + '.2'} className="review-input">
+                <div key={i + '.21'} className="review-input-header">{v[0]}</div>
+                <div key={i + '.22'} className="review-input-result">{v[1]}</div>
               </div>
             </div>
           );
@@ -67,9 +67,10 @@ class AccountInfo extends React.Component {
       }) : null}
       </div>
     );
+  }
 
+  render() {
     return (
-    // this.props.userProfile ? 
       <div className="survey-container">
         <div className="steps-section">Account Overview</div>
         <div className="account-btn-section">
@@ -79,14 +80,12 @@ class AccountInfo extends React.Component {
         <div className="survey-card">
           <div className="survey-section">
             <div className="steps-content">
-                { this.props.surveyFromAccountPage ? <Redirect to="/survey" /> : null }
-                {accountOverview}
+                {this.props.surveyFromAccountPage ? <Redirect to="/survey" /> : null}
+                {this.showAccountOverview()}
             </div>
           </div>
         </div>
       </div>);
-      //  :
-      //  null;
   }
 }
 
