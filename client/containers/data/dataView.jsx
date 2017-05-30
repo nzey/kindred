@@ -95,7 +95,7 @@ class DataView extends React.Component {
               <button className="qotdDataButton dataInfoButton">Info</button>
             </Popover>
             <QotdListMap />          
-          <DataMap/>
+          <DataMap />
         </div>
       </div>
     );

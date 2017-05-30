@@ -14,8 +14,6 @@ type UserAuth struct {
 	Token      string `gorm:"not null"`
 }
 
-// db.Where("name = ?", "jinzhu").Find(&UserAuth)
-
 type UserProfile struct {
 	gorm.Model
 	UserAuth     UserAuth

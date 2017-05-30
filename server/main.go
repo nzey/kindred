@@ -44,7 +44,7 @@ func main() {
 	db.AutoMigrate(&UserAuth{}, &UserProfile{}, &QotdAnswer{}, &FeedbackQuestion{}, &FeedbackAnswer{}, &Kinship{}, &Chat{})
 
 	seedQotds(db)
-	seedUsers(db, p, 20) // mock data for presentation
+	seedUsers(db, p, 500) // mock data for presentation
 
 	defer db.Close()
 

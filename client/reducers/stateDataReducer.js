@@ -1,3 +1,33 @@
+export default function(state = null, action) {
+  switch (action.type) {
+  case 'RESPONSE_RECEIVED':
+    let stuff = {};
+    for (let i = 0; i < action.payload.data.length; i++) {
+      let answer = action.payload.data[i];
+      let question = answer.QotdText;
+      let answerText = answer.AnswerText;
+      let answerState = answer.State;
+
+      // if a state object for this questions has already been created
+      if (stuff[question]) {
+        stuff[question][answerState].total++;  
+        if (answerText in stuff[question][answerState].answers) {
+          stuff[question][answerState].answers[answerText]++;
+        } else {
+          stuff[question][answerState].answers[answerText] = 1;
+        }
+      } else {
+        stuff[question] = JSON.parse(JSON.stringify(emptyStatesObj));
+        stuff[question][answerState].total = 1;
+        stuff[question][answerState].answers[answerText] = 1;
+      }
+    }
+    return stuff;
+    break;
+  }
+  return state;
+}
+
 const emptyStatesObj = {
   AL: {
     total: 0,
@@ -200,33 +230,3 @@ const emptyStatesObj = {
     answers: {}
   }
 };
-
-export default function(state = null, action) {
-  switch (action.type) {
-  case 'RESPONSE_RECEIVED':
-    let stuff = {};
-    for (let i = 0; i < action.payload.data.length; i++) {
-      let answer = action.payload.data[i];
-      let question = answer.QotdText;
-      let answerText = answer.AnswerText;
-      let answerState = answer.State;
-
-      // if a state object for this questions has already been created
-      if (stuff[question]) {
-        stuff[question][answerState].total++;  
-        if (answerText in stuff[question][answerState].answers) {
-          stuff[question][answerState].answers[answerText]++;
-        } else {
-          stuff[question][answerState].answers[answerText] = 1;
-        }
-      } else {
-        stuff[question] = JSON.parse(JSON.stringify(emptyStatesObj));
-        stuff[question][answerState].total = 1;
-        stuff[question][answerState].answers[answerText] = 1;
-      }
-    }
-  return stuff;
-  break;
-  }
-  return state;
-}

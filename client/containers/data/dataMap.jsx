@@ -5,65 +5,14 @@ import Faux from 'react-faux-dom';
 import * as topojson from 'topojson';
 import {bindActionCreators} from 'redux';
 import {connect} from 'react-redux';
+import stateAbbr from './helperStates.js';
 import '../../styles/index.css';
 
 class DataMap extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      stateAbbr: {
-        'AL': 'Alabama',
-        'AK': 'Alaska',
-        'AZ': 'Arizona',
-        'AR': 'Arkansas',
-        'CA': 'California',
-        'CO': 'Colorado',
-        'CT': 'Connecticut',
-        'DE': 'Delaware',
-        'DC': 'District of Columbia',
-        'FL': 'Florida',
-        'GA': 'Georgia',
-        'HI': 'Hawaii',
-        'ID': 'Idaho',
-        'IL': 'Illinois',
-        'IN': 'Indiana',
-        'IA': 'Iowa',
-        'KS': 'Kansas',
-        'KY': 'Kentucky',
-        'LA': 'Louisiana',
-        'ME': 'Maine',
-        'MD': 'Maryland',
-        'MA': 'Massachusetts',
-        'MI': 'Michigan',
-        'MN': 'Minnesota',
-        'MS': 'Mississippi',
-        'MO': 'Missouri',
-        'MT': 'Montana',
-        'NE': 'Nebraska',
-        'NV': 'Nevada',
-        'NH': 'New Hampshire',
-        'NJ': 'New Jersey',
-        'NM': 'New Mexico',
-        'NY': 'New York',
-        'NC': 'North Carolina',
-        'ND': 'North Dakota',
-        'OH': 'Ohio',
-        'OK': 'Oklahoma',
-        'OR': 'Oregon',
-        'PA': 'Pennsylvania',
-        'RI': 'Rhode Island',
-        'SC': 'South Carolina',
-        'SD': 'South Dakota',
-        'TN': 'Tennessee',
-        'TX': 'Texas',
-        'UT': 'Utah',
-        'VT': 'Vermont',
-        'VA': 'Virginia',
-        'WA': 'Washington',
-        'WV': 'West Virginia',
-        'WI': 'Wisconsin',
-        'WY': 'Wyoming'
-      }
+      mergeData: null
     };
     setTimeout(this.sizeChange, 100);
     this.renderMap = this.renderMap.bind(this);
@@ -73,18 +22,24 @@ class DataMap extends React.Component {
   /* ---- Merge question-of-the-day data with dataless topoJson object ---- */
 
   mergeTopoWithSelectedStateData(selectedTopic, allStateData, topoData) {
-    let selection = selectedTopic ? selectedTopic : allStateData ? Object.keys(allStateData)[0] : '';
+    let defaultSelection = allStateData ? Object.keys(allStateData)[0] : '';
+    let selection = selectedTopic ? selectedTopic : defaultSelection;
     if (allStateData) {
       topoData.objects.usStates.geometries.forEach((topoState, i) => {
         let state = topoState.properties.STATE_ABBR;
-        topoData.objects.usStates.geometries[i].properties.data = allStateData[selection][state];
+        let perStateData = allStateData[selection][state];
+        topoData.objects.usStates.geometries[i].properties.data = perStateData;
       });
       this.setState({mergeData: topoData});
     }
   }
 
   componentWillReceiveProps(nextprops) {
-    this.mergeTopoWithSelectedStateData(nextprops.questionChoice, nextprops.stateData, nextprops.topoData);
+    this.mergeTopoWithSelectedStateData(
+      nextprops.questionChoice,
+      nextprops.stateData,
+      nextprops.topoData
+    );
   }
   
   /* ----------------------- Make map size responsive --------------------- */
@@ -132,14 +87,15 @@ class DataMap extends React.Component {
   /* ------------------------ Build Hovering Info Box --------------------- */
   
   attachHoverBox(domElement) {
-    return d3.select(domElement)
+    d3.select(domElement)
       .append('div')
       .attr('id', 'hoverinfo')
       .classed('hide', true);
+    return d3.select('#hoverinfo');
   }
 
   showHoverInfo(hoverinfoBox, d) {
-    var name = this.state.stateAbbr[d.properties.STATE_ABBR];  
+    var name = stateAbbr[d.properties.STATE_ABBR];  
     let text = `Total: ${d.properties.data.total}<br>`;     
     for (let answer in d.properties.data.answers) {
       text += `${answer}: ${d.properties.data.answers[answer]}<br>`;
@@ -160,7 +116,7 @@ class DataMap extends React.Component {
       .classed('hide', true);
   }
   
-  populateHoverBox(hoverInfoElement, statesElements) {
+  populateHoverBox(statesElements) {
     statesElements.on('mouseover', (d) => {
       this.showHoverInfo(hoverinfo, d);
     })
@@ -176,11 +132,13 @@ class DataMap extends React.Component {
 
   render() {
     if (this.state.mergeData) {
-      let topoData = topojson.feature(this.state.mergeData, this.state.mergeData.objects.usStates).features;
+      let topoData = topojson
+        .feature(this.state.mergeData, this.state.mergeData.objects.usStates)
+        .features;
       let datafullMap = this.renderMap(topoData);
-      let hoverBox = this.attachHoverBox(datafullMap);
-      let dataElements = d3.select(datafullMap).selectAll('.states')
-      this.populateHoverBox(hoverBox, dataElements);
+      this.attachHoverBox(datafullMap);
+      let dataElements = d3.select(datafullMap).selectAll('.states');
+      this.populateHoverBox(dataElements);
       return datafullMap.toReact();
     } else {
       return null;
