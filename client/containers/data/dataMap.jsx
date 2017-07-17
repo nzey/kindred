@@ -14,9 +14,10 @@ class DataMap extends React.Component {
     this.state = {
       mergeData: null
     };
-    setTimeout(this.sizeChange, 100);
+    setTimeout(this.sizeChange, 1000);
     this.renderMap = this.renderMap.bind(this);
     this.showHoverInfo = this.showHoverInfo.bind(this);
+    this.sizeChange = this.sizeChange.bind(this);
   }
 
   /* ---- Merge question-of-the-day data with dataless topoJson object ---- */
@@ -54,7 +55,7 @@ class DataMap extends React.Component {
     d3.select(window).on('resize', this.sizeChange);
   }
 
-
+    
   /* ------------------- Build map with data-full topoJson --------------- */
 
   renderMap(topoData) {
