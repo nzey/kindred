@@ -1,6 +1,5 @@
 package main
 
-// structs
 type User struct {
 	Username string
 	Name     string
@@ -45,12 +44,12 @@ type UserQueue struct {
 }
 
 type VisitCheck struct {
-	Username string `json:"Username"`
+	Username  string `json:"Username"`
 	FirstTime string `json:"FirstTime"`
 }
 
 type Room struct {
-	RoomNumber int
+	RoomNumber     int
 	ParticipantOne string
 	ParticipantTwo string
 }

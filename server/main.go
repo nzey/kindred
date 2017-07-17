@@ -11,7 +11,6 @@ import (
 	"github.com/mediocregopher/radix.v2/pool"
 )
 
-//eventually get rid of these global variables
 var clients = make(map[*websocket.Conn]bool)
 var broadcast = make(chan Message)
 var upgrader = websocket.Upgrader{}
@@ -44,12 +43,9 @@ func main() {
 	db.AutoMigrate(&UserAuth{}, &UserProfile{}, &QotdAnswer{}, &FeedbackQuestion{}, &FeedbackAnswer{}, &Kinship{}, &Chat{})
 
 	seedQotds(db)
-	seedUsers(db, p, 500) // mock data for presentation
+	seedUsers(db, p, 500) // mock data
 
 	defer db.Close()
-
-	//websockets
-	// go wsMessages()
 
 	//routes
 	http.Handle("/", http.FileServer(http.Dir("../public/")))
@@ -68,10 +64,7 @@ func main() {
 	http.Handle("/api/queueRemove", queueRemoveHandler(p))
 	http.Handle("/api/room", roomHandler(p))
 	http.Handle("/api/roomRemove", roomRemoveHandler(p))
-	// http.Handle("/api/ws", wsHandler(p))
 	http.Handle("/api/qotd", qotdHandler(db, p, &qotdCounter))
-
-	// http.Handle("/api/kinships", kinships)
 
 	go worker(db, p, &qotdCounter)
 
