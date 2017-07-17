@@ -26,17 +26,22 @@
 - Go
 - Glide
 
-## Development
+## Run Locally
 
-### Installing Dependencies
-
-From within the root directory:
+1) Install dependencies: From within the root directory:
 
 ```sh
 npm install
 glide install
 ```
 
+2) In first shell: ```redis-server```
+3) In second shell: ```npm run build:watch```
+4) In third shell: ```npm run start```
+5) In fourth shell: ```node twilio-server/index.js```
+6) Open browser to http://localhost:8080
+
+### 
 ### Roadmap
 
 View the project roadmap [here](https://github.com/KindredApp/kindred/issues?utf8=%E2%9C%93&q=)
