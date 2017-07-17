@@ -70,12 +70,12 @@ type FeedbackAnswer struct {
 
 type ZipData struct {
 	gorm.Model
-	MedianAge      int // if age not given, use median age
-	AverageIncome  int // if income not given use average income
-	Education      int // if education not given, use most common education
-	Religiousity   int // if religion not given, pair randomly
-	Religion       int // don't assign (if pick most common and the person is not most, common)
-	Ethnicity      int // if Ethnicity
+	MedianAge      int
+	AverageIncome  int
+	Education      int
+	Religiousity   int
+	Religion       int
+	Ethnicity      int
 	State          string
 	PoliticalAffil int
 }
