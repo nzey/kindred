@@ -20,6 +20,7 @@ import (
 func qotdHandler(db *gorm.DB, p *pool.Pool, qotdCounter *int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		conn, err := p.Get()
+
 		defer p.Put(conn)
 		if err != nil {
 			panic(err)
@@ -28,8 +29,6 @@ func qotdHandler(db *gorm.DB, p *pool.Pool, qotdCounter *int) http.Handler {
 		if req.Method == http.MethodGet {
 			param := req.URL.Query().Get("user")
 
-			// if query string specifies a user id (e.g. api/qotd?user=555)
-			// respond with 10 of that user's qotd answers
 			if param != "" {
 				var allUserAnswers []QotdAnswer
 				userAnswers := make([]UserAnswer, 10)
@@ -39,9 +38,14 @@ func qotdHandler(db *gorm.DB, p *pool.Pool, qotdCounter *int) http.Handler {
 				}
 				db.Where("user_auth_id = ?", userid).Find(&allUserAnswers)
 				numOfAnswers := len(allUserAnswers)
+
+				if numOfAnswers > 10 {
+					allUserAnswers = allUserAnswers[0:10]
+				}
 				if numOfAnswers < 10 {
 					userAnswers = userAnswers[0:numOfAnswers]
 				}
+
 				for i, answer := range allUserAnswers {
 					var question Qotd
 					db.Model(&answer).Related(&question)
